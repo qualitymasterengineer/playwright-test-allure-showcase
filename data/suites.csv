@@ -1,0 +1,4 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"","1294","valida estado del carrito vacío tras no agregar productos","chromium","2026-03-09","passed","2026-03-09","Flujo completo: Login, Carrito y Checkout","checkout-flow.spec.ts","",""
+"","757","valida que login inválido muestra error","chromium","2026-03-09","passed","2026-03-09","Flujo completo: Login, Carrito y Checkout","checkout-flow.spec.ts","",""
+"","1899","completa login, agrega productos al carrito y finaliza checkout con validaciones de precios","chromium","2026-03-09","passed","2026-03-09","Flujo completo: Login, Carrito y Checkout","checkout-flow.spec.ts","",""
