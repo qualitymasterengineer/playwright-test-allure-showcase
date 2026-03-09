@@ -38,6 +38,17 @@ npm run report:open
 
 - **`report:generate`**: genera el reporte HTML en `allure-report` a partir de `allure-results`.
 - **`report:open`**: abre el reporte en el navegador.
+- **`report:clean-history`**: borra `allure-results` y `allure-report` para iniciar el histórico desde cero.
+
+## Reiniciar el histórico de ejecuciones
+
+Para limpiar el historial y que el siguiente reporte empiece desde cero (sin tendencias ni ejecuciones anteriores):
+
+```bash
+npm run report:clean-history
+```
+
+Luego haz commit y push de los cambios si `allure-results` está versionado, o deja que el proyecto **playwright-test** vuelva a subir resultados; la próxima generación y despliegue mostrará solo esa ejecución.
 
 ## Estructura esperada
 
