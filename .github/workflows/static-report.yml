@@ -1,0 +1,52 @@
+# Generates the Allure report from allure-results and deploys to gh-pages.
+# Preserves execution history: copies previous report's history from gh-pages before generating.
+name: Generate and Deploy Allure Report
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Restore report history from gh-pages (preserve trend)
+        run: |
+          git fetch origin gh-pages 2>/dev/null || true
+          if git show-ref --verify --quiet refs/remotes/origin/gh-pages && [ -d "allure-results" ]; then
+            git archive origin/gh-pages history 2>/dev/null | tar -x || true
+            if [ -d "history" ]; then
+              mkdir -p allure-results
+              mv history allure-results/
+              echo "Previous report history restored for trend continuity."
+            fi
+          fi
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Generate Allure Report
+        run: npm run report:generate
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./allure-report
+          publish_branch: gh-pages
