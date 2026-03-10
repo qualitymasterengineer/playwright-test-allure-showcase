@@ -1,9 +1,12 @@
+# Genera el reporte Allure desde allure-results y lo publica en gh-pages.
+# Copia history del reporte anterior (gh-pages) a allure-results para que
+# Trend, Duration trend, Retries trend y Categories trend se muestren correctamente.
 name: Generate and Deploy Allure Report
 
 on:
   push:
-    branches: [ main ] # Se activa cuando llegan nuevos resultados
-  workflow_dispatch: # Permite ejecución manual
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -14,23 +17,42 @@ jobs:
   build-report:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout (allure-results from main)
         uses: actions/checkout@v4
+        with:
+          path: repo
+
+      - name: Checkout previous report (gh-pages) for history
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: previous-report
+        continue-on-error: true
+
+      - name: Copy Allure history for Trend and Graphs
+        run: |
+          if [ -d previous-report/history ]; then
+            mkdir -p repo/allure-results
+            cp -r previous-report/history repo/allure-results/
+            echo "History copied; Trend/Graphs will show previous runs."
+          else
+            echo "No previous history (first run). Trends will appear from next run."
+          fi
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install Dependencies
-        run: npm install
+        run: cd repo && npm install
 
       - name: Generate Allure Report
-        run: npm run report:generate
+        run: cd repo && npm run report:generate
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./allure-report
-          publish_branch: gh-pages # Aquí se guardará la web final
+          publish_dir: repo/allure-report
+          publish_branch: gh-pages
