@@ -25,6 +25,8 @@ Este proyecto no es solo una suite de pruebas; es un **Showcase de Ingeniería d
 
 Este proyecto **solo muestra** los resultados de ejecución que genera el proyecto **playwright-test**. Ese proyecto es quien ejecuta las pruebas con Playwright y actualiza este repositorio con la carpeta `allure-results` para que aquí se genere y se visualice el reporte Allure.
 
+**Histórico:** En cada ejecución del workflow (al recibir un push a `main` con nuevos `allure-results`), se copia la carpeta `history` del reporte ya desplegado en `gh-pages` a `allure-results` antes de generar el nuevo reporte. Así se mantiene el histórico y las gráficas (Trend, Duration, Retries, Categories) se rellenan correctamente en cada despliegue.
+
 ## Uso
 
 1. Asegúrate de que la carpeta `allure-results` esté actualizada (el proyecto **playwright-test** la copia o sube aquí).
