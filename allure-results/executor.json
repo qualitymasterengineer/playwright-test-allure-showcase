@@ -1,0 +1,8 @@
+{
+  "name": "GitHub Actions",
+  "type": "github",
+  "buildName": "Playwright Tests",
+  "buildOrder": 8,
+  "buildUrl": "https://github.com/qualitymasterengineer/playwright-test/actions/runs/22880611057",
+  "reportName": "Run #8"
+}
