@@ -1,94 +1,167 @@
-#!/usr/bin/env node
 /**
- * Inyecta CSS/JS en allure-report/index.html para mostrar el logo de Playwright
- * en la fila "Playwright Framework" del widget Executors y ocultar el icono por defecto.
- * Compatible con el reporte generado por playwright-test (mismo parche que en ese proyecto).
+ * Parche post-generación del reporte Allure: reemplaza el icono del casco
+ * por el logo de Playwright en la fila "Playwright Framework" de Executors.
+ * Solo modifica la celda del icono (oculta el icono nativo y muestra ::before con el logo).
  */
+const fs = require('fs');
+const path = require('path');
 
-const fs = require("fs");
-const path = require("path");
+const reportDir = path.join(__dirname, '..', 'allure-report');
+const resultsDir = path.join(__dirname, '..', 'allure-results');
+const executorSource = path.join(resultsDir, 'executor.json');
+const widgetExecutors = path.join(reportDir, 'widgets', 'executors.json');
+const indexPath = path.join(reportDir, 'index.html');
+const logoPath = path.join(__dirname, '..', 'assets', 'playwright-logo.svg');
 
-const ROOT = path.join(__dirname, "..");
-const INDEX_HTML = path.join(ROOT, "allure-report", "index.html");
-const LOGO_SVG = path.join(ROOT, "assets", "playwright-logo.svg");
-
-if (!fs.existsSync(INDEX_HTML)) {
-  console.warn("patch-allure-executor-icon: index.html not found at", INDEX_HTML);
+if (!fs.existsSync(reportDir) || !fs.existsSync(indexPath)) {
+  console.log('Allure report not found; skipping executor icon patch.');
   process.exit(0);
 }
 
-if (!fs.existsSync(LOGO_SVG)) {
-  console.warn("patch-allure-executor-icon: playwright-logo.svg not found at", LOGO_SVG);
-  process.exit(0);
-}
-
-let html = fs.readFileSync(INDEX_HTML, "utf8");
-const svgRaw = fs.readFileSync(LOGO_SVG, "utf8");
-const logoDataUrl =
-  "data:image/svg+xml;base64," + Buffer.from(svgRaw, "utf8").toString("base64");
-
-const inject = `
-<!-- Patched by patch-allure-executor-icon.js: Playwright logo in Executors -->
-<style id="allure-executor-playwright-patch">
-  /* Oculta el icono por defecto en la fila del executor "Playwright Framework" */
-  .executor-row-playwright .executor-icon,
-  .executor-row-playwright img[src*="icon"],
-  .executor-row-playwright .icon {
-    opacity: 0;
-    width: 0;
-    height: 0;
-    overflow: hidden;
-  }
-  /* Muestra el logo de Playwright como ::before en el bloque del nombre */
-  .executor-row-playwright .executor-name::before,
-  .executor-row-playwright .info-block__name::before,
-  .executor-row-playwright td:first-child::before {
-    content: "";
-    display: inline-block;
-    width: 24px;
-    height: 24px;
-    margin-right: 8px;
-    vertical-align: middle;
-    background: url("${logoDataUrl}") no-repeat center;
-    background-size: contain;
-  }
-</style>
-<script>
-(function() {
-  function markPlaywrightExecutorRow() {
-    var xpath = "//*[contains(text(),'Playwright Framework') or contains(text(),'Playwright')]";
-    var iter = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-    var node;
-    while ((node = iter.iterateNext())) {
-      var row = node.closest('tr') || node.closest('li') || node.closest('.info-block') || node.closest('div[class*="executor"]') || node.parentElement;
-      if (row && !row.classList.contains('executor-row-playwright')) {
-        row.classList.add('executor-row-playwright');
-      }
+// Asegurar que el widget tenga los ejecutores (array). executor.json puede ser objeto o array.
+if (fs.existsSync(executorSource) && fs.existsSync(path.join(reportDir, 'widgets'))) {
+  try {
+    const data = JSON.parse(fs.readFileSync(executorSource, 'utf8'));
+    let list = Array.isArray(data) ? data : [data];
+    // Si solo hay uno y es GitHub, añadir fila Playwright para las dos líneas en la UI
+    const packagePath = path.join(__dirname, '..', 'package.json');
+    let pwVersion = '1.49.0';
+    try {
+      const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+      const ver = pkg.devDependencies && pkg.devDependencies['@playwright/test'];
+      if (ver) pwVersion = ver.replace(/^\^/, '');
+    } catch (_) {}
+    const playwrightRow = {
+      name: 'Playwright Framework',
+      type: 'playwright-custom',
+      buildName: `v${pwVersion}`,
+      reportUrl: 'https://playwright.dev',
+    };
+    const hasPlaywright = list.some((e) => e && e.name === 'Playwright Framework');
+    if (list.length === 1 && list[0].type === 'github' && !hasPlaywright) {
+      list = [list[0], playwrightRow];
     }
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', markPlaywrightExecutorRow);
-  } else {
-    markPlaywrightExecutorRow();
-  }
-  setTimeout(markPlaywrightExecutorRow, 500);
-  setTimeout(markPlaywrightExecutorRow, 2000);
-})();
-</script>
+    if (list.length > 0) {
+      fs.writeFileSync(widgetExecutors, JSON.stringify(list), 'utf8');
+    }
+  } catch (_) {}
+}
+
+// Logo SVG compacto (P verde Playwright) para mostrar en 20x20
+const fallbackSvg =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#2EAD33"><path d="M7 3h4c3.3 0 6 2.7 6 6s-2.7 6-6 6H9v4H7V3zm2 2v8h2c2.2 0 4-1.8 4-4s-1.8-4-4-4H9z"/></svg>';
+
+let svgForBase64 = fallbackSvg;
+if (fs.existsSync(logoPath)) {
+  try {
+    svgForBase64 = fs
+      .readFileSync(logoPath, 'utf8')
+      .replace(/<\?xml[^>]*\?>/gi, '')
+      .trim();
+  } catch (_) {}
+}
+
+const base64Logo = Buffer.from(svgForBase64).toString('base64');
+
+const css = `
+.custom-playwright-logo::before {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  background-image: url('data:image/svg+xml;base64,${base64Logo}');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.custom-playwright-logo .executor-icon,
+.custom-playwright-logo [class*="executor-icon"] {
+  display: none !important;
+}
 `;
 
-if (html.includes("allure-executor-playwright-patch")) {
-  console.log("patch-allure-executor-icon: already patched, skip.");
-  process.exit(0);
+/**
+ * Busca la fila que contiene "Playwright Framework", localiza la celda del icono,
+ * oculta el icono nativo y añade la clase para mostrar el logo en ::before.
+ */
+const script =
+  '<script id="custom-playwright-executor-patch">\n' +
+  '(function() {\n' +
+  '  var targetText = "Playwright Framework";\n' +
+  '  var className = "custom-playwright-logo";\n' +
+  '  function findIconCellForPlaywrightRow() {\n' +
+  '    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);\n' +
+  '    var node;\n' +
+  '    while ((node = walker.nextNode())) {\n' +
+  '      var text = (node.textContent || "").trim();\n' +
+  '      if (text.indexOf(targetText) === -1) continue;\n' +
+  '      var el = node.parentElement;\n' +
+  '      while (el && el !== document.body) {\n' +
+  '        var icon = el.querySelector("[class*=\\"executor-icon\\"], [class*=\\"icon\\"]");\n' +
+  '        if (icon) {\n' +
+  '          var iconParent = icon.parentElement;\n' +
+  '          if (iconParent && !iconParent.classList.contains(className)) {\n' +
+  '            icon.style.setProperty("display", "none", "important");\n' +
+  '            iconParent.classList.add(className);\n' +
+  '            return true;\n' +
+  '          }\n' +
+  '          return false;\n' +
+  '        }\n' +
+  '        var prev = el.previousElementSibling;\n' +
+  '        if (prev) {\n' +
+  '          var iconInPrev = prev.querySelector("[class*=\\"icon\\"]");\n' +
+  '          if (iconInPrev && !prev.classList.contains(className)) {\n' +
+  '            iconInPrev.style.setProperty("display", "none", "important");\n' +
+  '            prev.classList.add(className);\n' +
+  '            return true;\n' +
+  '          }\n' +
+  '        }\n' +
+  '        el = el.parentElement;\n' +
+  '      }\n' +
+  '    }\n' +
+  '    return false;\n' +
+  '  }\n' +
+  '  function run() {\n' +
+  '    if (findIconCellForPlaywrightRow()) return;\n' +
+  '    var attempts = 0;\n' +
+  '    var id = setInterval(function() {\n' +
+  '      attempts++;\n' +
+  '      if (findIconCellForPlaywrightRow() || attempts >= 30) clearInterval(id);\n' +
+  '    }, 200);\n' +
+  '  }\n' +
+  '  if (document.readyState === "loading") {\n' +
+  '    document.addEventListener("DOMContentLoaded", run);\n' +
+  '  } else {\n' +
+  '    setTimeout(run, 100);\n' +
+  '  }\n' +
+  '})();\n' +
+  '</script>';
+
+const styleBlock = '<style id="custom-playwright-executor-style">\n' + css.trim() + '\n</style>';
+
+let html = fs.readFileSync(indexPath, 'utf8');
+
+if (html.includes('id="custom-playwright-executor-style"')) {
+  html = html.replace(
+    /<style id="custom-playwright-executor-style">[\s\S]*?<\/style>/,
+    styleBlock
+  );
+} else {
+  html = html.replace('</head>', styleBlock + '\n</head>');
 }
 
-const insertBefore = "</head>";
-const idx = html.indexOf(insertBefore);
-if (idx === -1) {
-  console.warn("patch-allure-executor-icon: </head> not found in index.html");
-  process.exit(1);
+if (html.includes('id="custom-playwright-executor-patch"')) {
+  html = html.replace(
+    /<script id="custom-playwright-executor-patch">[\s\S]*?<\/script>/,
+    script
+  );
+} else {
+  html = html.replace('</body>', script + '\n</body>');
 }
 
-html = html.slice(0, idx) + inject + "\n" + html.slice(idx);
-fs.writeFileSync(INDEX_HTML, html, "utf8");
-console.log("patch-allure-executor-icon: Playwright logo patch applied to index.html.");
+fs.writeFileSync(indexPath, html, 'utf8');
+console.log('Allure: executor icon patch applied (Playwright logo replaces helmet).');

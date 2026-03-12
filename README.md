@@ -45,6 +45,15 @@ npm run report:open
 
 Para que el reporte se vea igual que en **playwright-test** (logo de Playwright en Executors), tras generar en local ejecuta `npm run report:patch` antes de abrir. En CI el workflow ya aplica este parche antes de desplegar a GitHub Pages.
 
+### Dos filas en Executors (GitHub Actions + Playwright Framework)
+
+En **playwright-test** se envía en CI un `executor.json` con **dos entradas** (array). El generador de **Allure 2** a veces solo escribe un executor o deja el widget vacío cuando recibe un array. En **este proyecto** el parche hace dos cosas:
+
+1. **Copiar executors al reporte:** lee `allure-results/executor.json` (objeto o array) y escribe su contenido en `allure-report/widgets/executors.json`, para que la UI tenga los datos y muestre todas las filas (GitHub Actions + Playwright Framework).
+2. **Logo de Playwright:** inyecta CSS/JS en `index.html` para mostrar el logo de Playwright en la fila "Playwright Framework" y ocultar el icono por defecto (y, si solo se renderizara una fila, clona esa fila como segunda con "Playwright Framework").
+
+**No hace falta cambiar nada en playwright-test:** basta con que siga enviando `executor.json` con las dos entradas; el parche del showcase se encarga de que se vean correctamente.
+
 ## Reiniciar el histórico de ejecuciones
 
 Para limpiar el historial y que el siguiente reporte empiece desde cero (sin tendencias ni ejecuciones anteriores):
