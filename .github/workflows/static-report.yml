@@ -63,6 +63,9 @@ jobs:
       - name: Generate Allure Report
         run: cd repo && npm run report:generate
 
+      - name: Apply executor icon patch (Playwright logo)
+        run: cd repo && node scripts/patch-allure-executor-icon.js
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:

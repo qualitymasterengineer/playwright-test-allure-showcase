@@ -5,6 +5,7 @@
   "scripts": {
     "report:generate": "allure generate ./allure-results -o ./allure-report --clean",
     "report:open": "allure open ./allure-report",
+    "report:patch": "node scripts/patch-allure-executor-icon.js",
     "report:clean-history": "node scripts/clean-allure-history.js"
   },
   "keywords": [

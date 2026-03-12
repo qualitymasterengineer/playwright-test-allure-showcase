@@ -40,7 +40,10 @@ npm run report:open
 
 - **`report:generate`**: genera el reporte HTML en `allure-report` a partir de `allure-results`.
 - **`report:open`**: abre el reporte en el navegador.
+- **`report:patch`**: aplica el parche del logo de Playwright en Executors (se ejecuta automáticamente en CI).
 - **`report:clean-history`**: borra `allure-results` y `allure-report` para iniciar el histórico desde cero.
+
+Para que el reporte se vea igual que en **playwright-test** (logo de Playwright en Executors), tras generar en local ejecuta `npm run report:patch` antes de abrir. En CI el workflow ya aplica este parche antes de desplegar a GitHub Pages.
 
 ## Reiniciar el histórico de ejecuciones
 
