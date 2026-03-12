@@ -4,8 +4,8 @@
     "type": "github",
     "buildName": "SauceDemo Playwright E2E",
     "reportUrl": "https://github.com/qualitymasterengineer/playwright-test",
-    "buildOrder": 13,
-    "buildUrl": "https://github.com/qualitymasterengineer/playwright-test/actions/runs/22985397634"
+    "buildOrder": 14,
+    "buildUrl": "https://github.com/qualitymasterengineer/playwright-test/actions/runs/22986188807"
   },
   {
     "name": "Playwright Framework",
