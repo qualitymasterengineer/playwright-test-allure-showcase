@@ -46,7 +46,7 @@
         gtag('js', new Date());
         gtag('config', 'G-FVWC4GKEYS', {
           'allureVersion': '2.37.0',
-          'reportUuid': 'd2ee5f9f-13d5-477d-b9da-0826bcc2b2ef',
+          'reportUuid': '941a120c-0fbf-418f-8c66-acb4e2e6ae53',
           'single_file': false
         });
     </script>
@@ -87,17 +87,34 @@
     return false;
   }
   function run() {
-    if (findIconCellForPlaywrightRow()) return;
+    findIconCellForPlaywrightRow();
     var attempts = 0;
     var id = setInterval(function() {
       attempts++;
       if (findIconCellForPlaywrightRow() || attempts >= 30) clearInterval(id);
     }, 200);
   }
+  var debounceTimer;
+  function reapplyOnDomChange() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(findIconCellForPlaywrightRow, 150);
+  }
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", run);
+    document.addEventListener("DOMContentLoaded", function() {
+      run();
+      if (typeof MutationObserver !== "undefined") {
+        var obs = new MutationObserver(reapplyOnDomChange);
+        obs.observe(document.body, { childList: true, subtree: true });
+      }
+    });
   } else {
-    setTimeout(run, 100);
+    setTimeout(function() {
+      run();
+      if (typeof MutationObserver !== "undefined") {
+        var obs = new MutationObserver(reapplyOnDomChange);
+        obs.observe(document.body, { childList: true, subtree: true });
+      }
+    }, 100);
   }
 })();
 </script>
