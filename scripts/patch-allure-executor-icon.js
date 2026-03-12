@@ -126,17 +126,34 @@ const script =
   '    return false;\n' +
   '  }\n' +
   '  function run() {\n' +
-  '    if (findIconCellForPlaywrightRow()) return;\n' +
+  '    findIconCellForPlaywrightRow();\n' +
   '    var attempts = 0;\n' +
   '    var id = setInterval(function() {\n' +
   '      attempts++;\n' +
   '      if (findIconCellForPlaywrightRow() || attempts >= 30) clearInterval(id);\n' +
   '    }, 200);\n' +
   '  }\n' +
+  '  var debounceTimer;\n' +
+  '  function reapplyOnDomChange() {\n' +
+  '    clearTimeout(debounceTimer);\n' +
+  '    debounceTimer = setTimeout(findIconCellForPlaywrightRow, 150);\n' +
+  '  }\n' +
   '  if (document.readyState === "loading") {\n' +
-  '    document.addEventListener("DOMContentLoaded", run);\n' +
+  '    document.addEventListener("DOMContentLoaded", function() {\n' +
+  '      run();\n' +
+  '      if (typeof MutationObserver !== "undefined") {\n' +
+  '        var obs = new MutationObserver(reapplyOnDomChange);\n' +
+  '        obs.observe(document.body, { childList: true, subtree: true });\n' +
+  '      }\n' +
+  '    });\n' +
   '  } else {\n' +
-  '    setTimeout(run, 100);\n' +
+  '    setTimeout(function() {\n' +
+  '      run();\n' +
+  '      if (typeof MutationObserver !== "undefined") {\n' +
+  '        var obs = new MutationObserver(reapplyOnDomChange);\n' +
+  '        obs.observe(document.body, { childList: true, subtree: true });\n' +
+  '      }\n' +
+  '    }, 100);\n' +
   '  }\n' +
   '})();\n' +
   '</script>';
