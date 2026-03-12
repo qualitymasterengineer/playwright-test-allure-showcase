@@ -1,8 +1,16 @@
-{
-  "name": "GitHub Actions",
-  "type": "github",
-  "buildName": "Playwright Tests",
-  "buildOrder": 10,
-  "buildUrl": "https://github.com/qualitymasterengineer/playwright-test/actions/runs/22881239433",
-  "reportName": "Run #10"
-}
+[
+  {
+    "name": "GitHub Actions",
+    "type": "github",
+    "buildName": "SauceDemo Playwright E2E",
+    "reportUrl": "https://github.com/qualitymasterengineer/playwright-test",
+    "buildOrder": 13,
+    "buildUrl": "https://github.com/qualitymasterengineer/playwright-test/actions/runs/22985397634"
+  },
+  {
+    "name": "Playwright Framework",
+    "type": "playwright-custom",
+    "buildName": "v1.49.0",
+    "reportUrl": "https://playwright.dev"
+  }
+]
